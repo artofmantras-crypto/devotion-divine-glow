@@ -186,3 +186,8 @@
   border: 1px solid color-mix(in oklab, var(--gold) 60%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold) 25%, transparent);
 }
+
+/* Hide the "Edit with Lovable" badge on the published site */
+#lovable-badge {
+  display: none !important;
+}
