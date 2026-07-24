@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import heroImg from "@/assets/hero-mahakal.jpg";
 import rudraImg from "@/assets/rudra-abhishek.jpg";
 import panditsImg from "@/assets/pandits-havan.jpg";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 });
 
 const bookingSchema = z.object({
-  name: z
+  fullName: z
     .string()
     .trim()
     .min(2, { message: "Please enter your full name" })
@@ -36,7 +36,24 @@ const bookingSchema = z.object({
     .string()
     .trim()
     .regex(/^[+\d][\d\s-]{7,15}$/, { message: "Enter a valid phone number" }),
-  date: z.string().min(1, { message: "Please choose a preferred date" }),
+  email: z.string().trim().email({ message: "Enter a valid email address" }),
+  city: z
+    .string()
+    .trim()
+    .min(2, { message: "Please enter your city" })
+    .max(60, { message: "City name is too long" }),
+  profession: z
+    .string()
+    .trim()
+    .min(2, { message: "Please enter your profession" })
+    .max(60, { message: "Too long" }),
+  gotra: z.string().trim().max(60, { message: "Too long" }).optional().or(z.literal("")),
+  suffering: z
+    .string()
+    .trim()
+    .max(400, { message: "Please keep this under 400 characters" })
+    .optional()
+    .or(z.literal("")),
   seva: z.string().min(1),
 });
 
@@ -63,9 +80,25 @@ function Ornament({ className = "" }: { className?: string }) {
 
 function Index() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", date: "", seva: "Rudra Abhishek — ₹101" });
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    city: "",
+    profession: "",
+    gotra: "",
+    suffering: "",
+    seva: "Rudra Abhishek — ₹51",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const openBooking = (seva: string) => {
+    setForm((f) => ({ ...f, seva }));
+    setErrors({});
+    setBookingOpen(true);
+  };
 
   const handleBooking = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -84,9 +117,19 @@ function Index() {
     setTimeout(() => {
       setSubmitting(false);
       toast.success("Sankalp request received", {
-        description: `Har Har Mahadev, ${result.data.name}. Our team will contact you shortly on ${result.data.phone}.`,
+        description: `Har Har Mahadev, ${result.data.fullName}. Our team will contact you shortly on ${result.data.phone}.`,
       });
-      setForm({ name: "", phone: "", date: "", seva: form.seva });
+      setForm((f) => ({
+        fullName: "",
+        phone: "",
+        email: "",
+        city: "",
+        profession: "",
+        gotra: "",
+        suffering: "",
+        seva: f.seva,
+      }));
+      setBookingOpen(false);
     }, 700);
   };
 
@@ -113,9 +156,13 @@ function Index() {
             <a href="#book" className="hover:text-white transition">Book</a>
             <a href="#contact" className="hover:text-white transition">Contact</a>
           </nav>
-          <a href="#offers" className="rounded-full bg-[var(--saffron)] px-5 py-2 text-sm font-medium text-[oklch(0.22_0.08_40)] shadow-[var(--shadow-gold)] hover:bg-[var(--saffron-bright)] transition">
+          <button
+            type="button"
+            onClick={() => openBooking(form.seva)}
+            className="rounded-full bg-[var(--saffron)] px-5 py-2 text-sm font-medium text-[oklch(0.22_0.08_40)] shadow-[var(--shadow-gold)] hover:bg-[var(--saffron-bright)] transition"
+          >
             Book Sankalp
-          </a>
+          </button>
         </div>
       </header>
 
@@ -145,9 +192,13 @@ function Index() {
             in the sacred city of Ujjain, with your personalized Sankalp.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <a href="#offers" className="rounded-full bg-[var(--saffron)] px-8 py-3.5 font-medium text-[oklch(0.2_0.08_35)] shadow-[var(--shadow-gold)] hover:bg-[var(--saffron-bright)] transition text-base">
+            <button
+              type="button"
+              onClick={() => openBooking(form.seva)}
+              className="rounded-full bg-[var(--saffron)] px-8 py-3.5 font-medium text-[oklch(0.2_0.08_35)] shadow-[var(--shadow-gold)] hover:bg-[var(--saffron-bright)] transition text-base"
+            >
               Book Your Sankalp
-            </a>
+            </button>
             <a href="#pooja" className="rounded-full border border-[var(--gold-soft)]/50 px-8 py-3.5 font-medium text-[var(--gold-soft)] hover:bg-white/10 transition text-base backdrop-blur-sm">
               View Shravan Seva
             </a>
@@ -158,7 +209,7 @@ function Index() {
               <div className="text-xs uppercase tracking-widest mt-1 opacity-80">Maha Mrityunjaya Jaap</div>
             </div>
             <div>
-              <div className="font-display text-3xl md:text-4xl text-white">30<span className="text-[var(--saffron)]">+</span></div>
+              <div className="font-display text-3xl md:text-4xl text-white">15<span className="text-[var(--saffron)]">+</span></div>
               <div className="text-xs uppercase tracking-widest mt-1 opacity-80">Days of Shravan Seva</div>
             </div>
             <div>
@@ -240,13 +291,13 @@ function Index() {
               श्री महाकाल की नगरी उज्जैन
             </div>
             <div className="mt-6 flex flex-wrap gap-6 text-[var(--gold-soft)]">
-              <div className="flex items-center gap-2"><span className="text-[var(--saffron)]">🗓</span> 30 July – 30 August</div>
+              <div className="flex items-center gap-2"><span className="text-[var(--saffron)]">🗓</span> 10 Aug – 25 Aug</div>
               <div className="flex items-center gap-2"><span className="text-[var(--saffron)]">📍</span> Ujjain, Mahakaal Nagari</div>
               <div className="flex items-center gap-2"><span className="text-[var(--saffron)]">🔱</span> Shravan Maas</div>
             </div>
             <p className="mt-8 text-lg leading-relaxed text-[var(--gold-soft)]/95 font-light">
               During the sacred month of <span className="italic">Shravan</span>, dedicated to Lord Shiva, join this powerful
-              month-long Maha Mrityunjaya Jaap performed by a team of experienced Vedic Pandits
+              15-day Maha Mrityunjaya Jaap performed by a team of experienced Vedic Pandits
               in the holy city of Ujjain.
             </p>
             <a href="#offers" className="mt-8 inline-flex rounded-full bg-[var(--saffron)] px-8 py-3.5 font-medium text-[oklch(0.2_0.08_35)] shadow-[var(--shadow-gold)] hover:bg-[var(--saffron-bright)] transition">
@@ -282,8 +333,8 @@ function Index() {
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-display text-2xl text-[var(--primary)]">Rudra Abhishek</h3>
                   <div className="text-right">
-                    <div className="font-display text-4xl text-[var(--primary)]">₹101</div>
-                    <div className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Every Monday</div>
+                    <div className="font-display text-4xl text-[var(--primary)]">₹51</div>
+                    <div className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">One-time</div>
                   </div>
                 </div>
                 <p className="mt-4 text-[var(--muted-foreground)] leading-relaxed">
@@ -297,8 +348,12 @@ function Index() {
                     <li className="flex gap-2"><span className="text-[var(--saffron)]">✦</span> Health & Positivity</li>
                   </ul>
                 </div>
-                <button className="mt-8 w-full rounded-full bg-[var(--primary)] px-6 py-3 font-medium text-[var(--primary-foreground)] hover:opacity-90 transition">
-                  Book Sankalp — ₹101
+                <button
+                  type="button"
+                  onClick={() => openBooking("Rudra Abhishek — ₹51")}
+                  className="mt-8 w-full rounded-full bg-[var(--primary)] px-6 py-3 font-medium text-[var(--primary-foreground)] hover:opacity-90 transition"
+                >
+                  Book Sankalp — ₹51
                 </button>
               </div>
             </article>
@@ -321,8 +376,8 @@ function Index() {
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-display text-2xl">Complete Shravan Seva</h3>
                   <div className="text-right">
-                    <div className="font-display text-4xl text-[var(--gold-soft)]">₹11,000</div>
-                    <div className="text-xs uppercase tracking-widest opacity-80">Full Month</div>
+                    <div className="font-display text-4xl text-[var(--gold-soft)]">₹15,000</div>
+                    <div className="text-xs uppercase tracking-widest opacity-80">15 Days</div>
                   </div>
                 </div>
                 <p className="mt-4 leading-relaxed text-[var(--gold-soft)]/95">
@@ -343,8 +398,12 @@ function Index() {
                     ))}
                   </ul>
                 </div>
-                <button className="mt-8 w-full rounded-full bg-[var(--ivory)] px-6 py-3 font-semibold text-[var(--primary)] hover:bg-[var(--gold-soft)] transition">
-                  Book Complete Seva — ₹11,000
+                <button
+                  type="button"
+                  onClick={() => openBooking("Complete Shravan Seva — ₹15,000")}
+                  className="mt-8 w-full rounded-full bg-[var(--ivory)] px-6 py-3 font-semibold text-[var(--primary)] hover:bg-[var(--gold-soft)] transition"
+                >
+                  Book Complete Seva — ₹15,000
                 </button>
               </div>
             </article>
@@ -600,39 +659,65 @@ function Index() {
             </ul>
           </div>
 
-          <form
-            onSubmit={handleBooking}
-            noValidate
-            className="rounded-2xl bg-[oklch(0.98_0.02_82)] p-8 md:p-10 text-[var(--foreground)] shadow-[var(--shadow-warm)] ornate-border"
-          >
-            <div className="text-center mb-6">
-              <div className="font-devanagari text-[var(--primary)]">पूजा बुकिंग</div>
-              <div className="font-display text-2xl text-[var(--primary)]">Reserve Your Pooja</div>
+          <div className="rounded-2xl bg-[oklch(0.98_0.02_82)] p-8 md:p-10 text-[var(--foreground)] shadow-[var(--shadow-warm)] ornate-border text-center">
+            <div className="font-devanagari text-[var(--primary)]">पूजा बुकिंग</div>
+            <div className="font-display text-2xl text-[var(--primary)]">Reserve Your Pooja</div>
+            <p className="mt-4 text-[var(--muted-foreground)] leading-relaxed">
+              Tap below to share your details — full name, contact, city, profession, gotra, and any
+              concern you'd like the Pandit to include in your Sankalp.
+            </p>
+            <button
+              type="button"
+              onClick={() => openBooking(form.seva)}
+              className="mt-8 w-full rounded-full px-6 py-3.5 font-medium text-[oklch(0.22_0.08_40)] shadow-[var(--shadow-gold)] hover:opacity-95 transition"
+              style={{ background: "var(--gradient-saffron)", color: "oklch(0.98 0.02 85)" }}
+            >
+              🔱 Book My Sankalp
+            </button>
+            <p className="mt-4 text-xs text-center text-[var(--muted-foreground)]">
+              By booking, you agree to be contacted on WhatsApp regarding your pooja.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* BOOKING FORM MODAL — opens from every "Book Sankalp" button on the page */}
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="max-w-lg bg-[oklch(0.98_0.02_82)] text-[var(--foreground)] ornate-border max-h-[90vh] overflow-y-auto">
+          <div className="text-center mb-2">
+            <div className="font-devanagari text-[var(--primary)]">पूजा बुकिंग</div>
+            <DialogTitle className="font-display text-2xl text-[var(--primary)] font-normal">
+              Reserve Your Sankalp
+            </DialogTitle>
+            <DialogDescription className="text-sm text-[var(--muted-foreground)] mt-1">
+              {form.seva}
+            </DialogDescription>
+          </div>
+
+          <form onSubmit={handleBooking} noValidate className="space-y-4 mt-2">
+            <div>
+              <label htmlFor="bk-fullName" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                Full Name
+              </label>
+              <input
+                id="bk-fullName"
+                name="fullName"
+                type="text"
+                maxLength={80}
+                autoComplete="name"
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
+                placeholder="e.g. Ramesh Sharma"
+                aria-invalid={!!errors.fullName}
+                aria-describedby={errors.fullName ? "bk-fullName-err" : undefined}
+              />
+              {errors.fullName && (
+                <p id="bk-fullName-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.fullName}</p>
+              )}
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="bk-name" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  id="bk-name"
-                  name="name"
-                  type="text"
-                  maxLength={80}
-                  autoComplete="name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
-                  placeholder="e.g. Ramesh Sharma"
-                  aria-invalid={!!errors.name}
-                  aria-describedby={errors.name ? "bk-name-err" : undefined}
-                />
-                {errors.name && (
-                  <p id="bk-name-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.name}</p>
-                )}
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="bk-phone" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
                   Phone / WhatsApp
@@ -655,59 +740,123 @@ function Index() {
                   <p id="bk-phone-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.phone}</p>
                 )}
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="bk-date" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
-                    Preferred Date
-                  </label>
-                  <input
-                    id="bk-date"
-                    name="date"
-                    type="date"
-                    min={new Date().toISOString().slice(0, 10)}
-                    value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
-                    className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
-                    aria-invalid={!!errors.date}
-                    aria-describedby={errors.date ? "bk-date-err" : undefined}
-                  />
-                  {errors.date && (
-                    <p id="bk-date-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.date}</p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="bk-seva" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
-                    Seva
-                  </label>
-                  <select
-                    id="bk-seva"
-                    name="seva"
-                    value={form.seva}
-                    onChange={(e) => setForm({ ...form, seva: e.target.value })}
-                    className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
-                  >
-                    <option>Rudra Abhishek — ₹101</option>
-                    <option>Complete Shravan Seva — ₹11,000</option>
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="bk-email" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                  Email
+                </label>
+                <input
+                  id="bk-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
+                  placeholder="you@example.com"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "bk-email-err" : undefined}
+                />
+                {errors.email && (
+                  <p id="bk-email-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.email}</p>
+                )}
               </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-full px-6 py-3.5 font-medium text-[oklch(0.22_0.08_40)] shadow-[var(--shadow-gold)] hover:opacity-95 transition disabled:opacity-60"
-                style={{ background: "var(--gradient-saffron)", color: "oklch(0.98 0.02 85)" }}
-              >
-                {submitting ? "Reserving your Sankalp…" : "🔱 Book My Sankalp"}
-              </button>
-              <p className="text-xs text-center text-[var(--muted-foreground)]">
-                By booking, you agree to be contacted on WhatsApp regarding your pooja.
-              </p>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="bk-city" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                  City
+                </label>
+                <input
+                  id="bk-city"
+                  name="city"
+                  type="text"
+                  maxLength={60}
+                  autoComplete="address-level2"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
+                  placeholder="e.g. Bengaluru"
+                  aria-invalid={!!errors.city}
+                  aria-describedby={errors.city ? "bk-city-err" : undefined}
+                />
+                {errors.city && (
+                  <p id="bk-city-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.city}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="bk-profession" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                  Profession
+                </label>
+                <input
+                  id="bk-profession"
+                  name="profession"
+                  type="text"
+                  maxLength={60}
+                  value={form.profession}
+                  onChange={(e) => setForm({ ...form, profession: e.target.value })}
+                  className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
+                  placeholder="e.g. Software Engineer"
+                  aria-invalid={!!errors.profession}
+                  aria-describedby={errors.profession ? "bk-profession-err" : undefined}
+                />
+                {errors.profession && (
+                  <p id="bk-profession-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.profession}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="bk-gotra" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                Gotra <span className="normal-case text-[var(--muted-foreground)]">(optional)</span>
+              </label>
+              <input
+                id="bk-gotra"
+                name="gotra"
+                type="text"
+                maxLength={60}
+                value={form.gotra}
+                onChange={(e) => setForm({ ...form, gotra: e.target.value })}
+                className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)]"
+                placeholder="e.g. Bharadwaj"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="bk-suffering" className="block text-xs uppercase tracking-widest text-[var(--primary)] mb-1.5">
+                Any suffering you are facing <span className="normal-case text-[var(--muted-foreground)]">(optional)</span>
+              </label>
+              <textarea
+                id="bk-suffering"
+                name="suffering"
+                rows={3}
+                maxLength={400}
+                value={form.suffering}
+                onChange={(e) => setForm({ ...form, suffering: e.target.value })}
+                className="w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--saffron)] resize-none"
+                placeholder="Share anything you'd like the Pandit to include in your Sankalp"
+                aria-invalid={!!errors.suffering}
+                aria-describedby={errors.suffering ? "bk-suffering-err" : undefined}
+              />
+              {errors.suffering && (
+                <p id="bk-suffering-err" className="mt-1 text-sm text-[var(--destructive)]">{errors.suffering}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-full px-6 py-3.5 font-medium text-[oklch(0.22_0.08_40)] shadow-[var(--shadow-gold)] hover:opacity-95 transition disabled:opacity-60"
+              style={{ background: "var(--gradient-saffron)", color: "oklch(0.98 0.02 85)" }}
+            >
+              {submitting ? "Reserving your Sankalp…" : "🔱 Book My Sankalp"}
+            </button>
+            <p className="text-xs text-center text-[var(--muted-foreground)]">
+              By booking, you agree to be contacted on WhatsApp regarding your pooja.
+            </p>
           </form>
-        </div>
-      </section>
+        </DialogContent>
+      </Dialog>
 
       {/* CONTACT / FOOTER */}
       <footer id="contact" className="relative bg-[oklch(0.18_0.08_25)] text-[var(--gold-soft)]">
